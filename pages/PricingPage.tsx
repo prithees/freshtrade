@@ -1,25 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { fetchProducts } from '../services/googleSheetService';
+import React, { useState } from 'react';
 import { Product } from '../types';
 import { CURRENCY_RATES, CURRENCY_SYMBOLS } from '../constants';
+import { useProducts } from '../context/ProductContext';
 
 type Currency = keyof typeof CURRENCY_RATES;
 
 const PricingPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products } = useProducts();
   const [currency, setCurrency] = useState<Currency>('SGD');
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      setLoading(true);
-      const data = await fetchProducts();
-      setProducts(data);
-      setLoading(false);
-    };
-    loadProducts();
-  }, []);
-  
   const handleDownloadCSV = () => {
     const headers = ['Product ID', 'Category', 'Product Name', 'Unit', `Price (${currency})`, 'Min Order Qty', 'Stock Status'];
     const rows = products.map(p => [
@@ -90,28 +79,24 @@ const PricingPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {loading ? (
-              <tr><td colSpan={5} className="text-center py-10 text-gray-500">Loading prices...</td></tr>
-            ) : (
-              products.map(product => (
-                <tr key={product.productId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{product.productName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                    {CURRENCY_SYMBOLS[currency]}{(product.pricePerUnit * CURRENCY_RATES[currency]).toFixed(2)}
-                    <span className="text-gray-500 font-normal"> / {product.unit}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.minOrderQty} {product.unit}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStockColor(product.stockStatus)}`}>
-                      {product.stockStatus}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
+            {products.map(product => (
+              <tr key={product.productId} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">{product.productName}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                  {CURRENCY_SYMBOLS[currency]}{(product.pricePerUnit * CURRENCY_RATES[currency]).toFixed(2)}
+                  <span className="text-gray-500 font-normal"> / {product.unit}</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.minOrderQty} {product.unit}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStockColor(product.stockStatus)}`}>
+                    {product.stockStatus}
+                  </span>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

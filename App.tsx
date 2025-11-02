@@ -9,8 +9,9 @@ import ProductsPage from './pages/ProductsPage';
 import PricingPage from './pages/PricingPage';
 import CareersPage from './pages/CareersPage';
 import ContactPage from './pages/ContactPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsOfServicePage from './pages/TermsOfServicePage';
+import AddProductPage from './pages/AddProductPage';
+import AdminRoute from './components/AdminRoute';
+
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -27,11 +28,17 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/products" element={<ProductsPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/add-product" element={<AddProductPage />} />
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/privacy" element={<PrivacyPolicyPage />} />
-          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route 
+            path="/add-product" 
+            element={
+              <AdminRoute>
+                <AddProductPage />
+              </AdminRoute>
+            } 
+          />
         </Routes>
       </main>
       <Footer />

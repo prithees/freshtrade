@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { fetchProducts } from '../services/googleSheetService';
+import React, { useState, useMemo } from 'react';
 import { Product } from '../types';
 import ProductDetailModal from '../components/ProductDetailModal';
+import { useProducts } from '../context/ProductContext';
 
 const ProductCard: React.FC<{ product: Product; onClick: () => void }> = ({ product, onClick }) => (
   <div
@@ -31,22 +31,10 @@ const ProductCard: React.FC<{ product: Product; onClick: () => void }> = ({ prod
 
 
 const ProductsPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [visibleCount, setVisibleCount] = useState(8); // Show 2 rows (4 per row)
-
-  useEffect(() => {
-    const loadProducts = async () => {
-      setLoading(true);
-      const data = await fetchProducts();
-      setProducts(data);
-      setLoading(false);
-    };
-    loadProducts();
-  }, []);
 
   const categories = useMemo(() => {
     return ['All', ...Array.from(new Set(products.map(p => p.category)))];
@@ -59,12 +47,6 @@ const ProductsPage: React.FC = () => {
       return matchesCategory && matchesSearch;
     });
   }, [products, searchTerm, selectedCategory]);
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-
-  const handleShowMore = () => {
-    setVisibleCount((prev) => prev + 4); // Show 1 more row (4 products)
-  };
 
   const handleCloseModal = () => {
     setSelectedProduct(null);
@@ -101,31 +83,14 @@ const ProductsPage: React.FC = () => {
             ))}
           </select>
         </div>
-        {loading ? (
-          <div className="text-center py-10">
-            <p className="text-gray-600">Loading products...</p>
-          </div>
-        ) : (   
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {visibleProducts.length > 0 ? (
-                visibleProducts.map(product => <ProductCard key={product.productId} product={product} onClick={() => setSelectedProduct(product)} />)
-              ) : (
-                <p className="col-span-full text-center text-gray-600 py-10">No products found matching your criteria.</p>
-              )}
-            </div>
-            {visibleCount < filteredProducts.length && (
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={handleShowMore}
-                  className="px-6 py-2 bg-green-500 text-white rounded-full shadow hover:bg-green-600 transition-colors"
-                >
-                  Show More
-                </button>
-              </div>
-            )}
-          </>
-        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map(product => <ProductCard key={product.productId} product={product} onClick={() => setSelectedProduct(product)} />)
+          ) : (
+            <p className="col-span-full text-center text-gray-600 py-10">No products found matching your criteria.</p>
+          )}
+        </div>
       </div>
       {selectedProduct && (
         <ProductDetailModal product={selectedProduct} onClose={handleCloseModal} />
