@@ -1,7 +1,6 @@
 import { Product } from '../types';
-import { GOOGLE_SHEET_URL } from '../constants';
 
-const MOCK_PRODUCTS: Product[] = [
+export const initialProducts: Product[] = [
   {
     productId: 'VEG001',
     category: 'Vegetables',
@@ -81,59 +80,3 @@ const MOCK_PRODUCTS: Product[] = [
     tags: ['Imported', 'Hass'],
   },
 ];
-
-
-const parseCSV = (csvText: string): Product[] => {
-  const lines = csvText.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
-  const products: Product[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i]) continue;
-    
-    // Robust CSV parsing to handle commas within quoted fields.
-    // This regex splits by comma only if it's not inside quotes.
-    const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
-                         .map(v => v.trim().replace(/^"|"$/g, ''));
-
-    const productData: any = {};
-    headers.forEach((header, index) => {
-      productData[header] = values[index];
-    });
-
-    if (!productData.product_id || !productData.product_name) continue;
-
-    products.push({
-      productId: productData.product_id,
-      category: productData.category || 'Uncategorized',
-      productName: productData.product_name,
-      imageUrl: productData.image_url || `https://source.unsplash.com/400x300/?${productData.product_name.toLowerCase().replace(' ', '-')}`,
-      unit: productData.unit || 'unit',
-      pricePerUnit: parseFloat(productData.price_per_unit) || 0,
-      minOrderQty: parseInt(productData.min_order_qty, 10) || 1,
-      stockStatus: (productData.stock_status as Product['stockStatus']) || 'In Stock',
-      lastUpdated: productData.last_updated || new Date().toISOString().split('T')[0],
-      description: productData.description || 'High-quality, freshly sourced produce.',
-      tags: productData.tags ? productData.tags.split(';').map((t: string) => t.trim()) : [],
-    });
-  }
-  return products;
-};
-
-export const fetchProducts = async (): Promise<Product[]> => {
-  try {
-    const response = await fetch(GOOGLE_SHEET_URL);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const csvText = await response.text();
-    const parsedProducts = parseCSV(csvText);
-    // If sheet is empty or parsing fails, return mock data
-    return parsedProducts.length > 0 ? parsedProducts : MOCK_PRODUCTS;
-  } catch (error) {
-    console.error("Failed to fetch or parse product data, returning mock data:", error);
-    return MOCK_PRODUCTS;
-  }
-};
